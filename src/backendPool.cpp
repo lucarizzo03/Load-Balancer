@@ -11,19 +11,3 @@ using namespace std;
 
 
 
-
-
-
-int main(int argc, char* argv[]) {
-    
-    
-
-
-
-
-
-   
-}
-
-// build: cmake --build build
-// run: ./build/LoadBalancer
