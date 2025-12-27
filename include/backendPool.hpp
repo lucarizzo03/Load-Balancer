@@ -17,13 +17,10 @@ public:
 
     // acess for health check func
 
-    // add server to registry
+    // add server to backend pool 
+    void storeNewAddress(const struct sockaddr* addr, socklen_t len);
 
     // get next healthy server
-
-
-
-
 
 private:
     vector<Backend> servers;
