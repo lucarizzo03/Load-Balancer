@@ -12,17 +12,16 @@ struct Backend {
     atomic<bool> isHealthy = true; 
 };
 
-
 class BackendPool {
 public:
 
     // acess for health check func
 
     // add server to backend pool 
-    void storeNewAddress(const struct sockaddr* addr, socklen_t len);
+    void storeNewAddress(const struct sockaddr* addr);
 
-    // get next healthy server
-    Backend nextServer();
+    // get next healthy server - Round Robin or other LB algo
+    Backend *nextServer();
     
 
 private:

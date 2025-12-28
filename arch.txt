@@ -1,0 +1,14 @@
+[ Client ]      [ Load Balancer ]      [ Backend Pool ]
+    |                   |                      |
+    |---(1) Connect---->|                      |
+    |                   |---(2) nextServer?--->|
+    |                   |<--(3) Returns IP B---|
+    |                   |                      |
+    |                   |---(4) Connect------->[ Server A (Idle) ]
+    |                   |                      |
+    |                   |=====================>[ Server B (Active) ]
+    |                   |                      |
+    |                   |                      [ Server C (Down) ]
+    |                   |
+    |--(5) Send Data--->|----(6) Forward------>|
+    |<-(8) Fwd Reply----|<---(7) Reply---------|
