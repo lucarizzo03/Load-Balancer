@@ -6,7 +6,6 @@
 
 using namespace std;
 
-
 void BackendPool::storeNewAddress(const struct sockaddr* addr) {
     socklen_t addrSize;
 
@@ -26,6 +25,15 @@ void BackendPool::storeNewAddress(const struct sockaddr* addr) {
 
     // copies raw socket address bytes
     memcpy(&backend.address, addr, backend.addr_len);
+}
+
+// Round Robin LB algo
+Backend* BackendPool::nextServer() {
+
+
+
+
+
 }
 
 
