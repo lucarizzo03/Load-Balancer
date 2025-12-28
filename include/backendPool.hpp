@@ -12,6 +12,7 @@ struct Backend {
     atomic<bool> isHealthy = true; 
 };
 
+
 class BackendPool {
 public:
 
@@ -21,6 +22,8 @@ public:
     void storeNewAddress(const struct sockaddr* addr, socklen_t len);
 
     // get next healthy server
+    Backend nextServer();
+    
 
 private:
     vector<Backend> servers;
