@@ -6,6 +6,7 @@
 
 using namespace std;
 
+// stores addresses in servers vector
 void BackendPool::storeNewAddress(const struct sockaddr* addr) {
     socklen_t addrSize;
 
@@ -28,7 +29,7 @@ void BackendPool::storeNewAddress(const struct sockaddr* addr) {
 }
 
 // Round Robin LB algo
-Backend* BackendPool::nextServer() {
+Backend* BackendPool::RoundRobin() {
 
 
 

@@ -20,8 +20,10 @@ public:
     // add server to backend pool 
     void storeNewAddress(const struct sockaddr* addr);
 
-    // get next healthy server - Round Robin or other LB algo
-    Backend *nextServer();
+    // get next healthy server - Round Robin
+    Backend *RoundRobin();
+
+    // add some other LB algos
     
 
 private:
