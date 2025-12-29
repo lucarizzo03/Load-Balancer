@@ -32,9 +32,13 @@ int main(int argc, char* argv[]) {
         struct sockaddr_in6 addr;
         addr.sin6_family = AF_INET6;
         inet_pton(AF_INET6, "::1", &addr.sin6_addr);
-        addr.sin6_family = htons(13000 + i);
+        addr.sin6_port = htons(13000 + i);
         pool.storeNewAddress((struct sockaddr*)&addr);
     }
+
+
+    // need to start health checker 
+    // need to start Load Balancer
 
     return 0;
 }

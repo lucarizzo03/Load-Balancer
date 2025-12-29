@@ -3,6 +3,7 @@
 #include <netinet/in.h>   // Internet: sockaddr_in, sockaddr_in6, htons()
 #include <vector> 
 #include <atomic>
+#include <shared_mutex>
 
 using namespace std;
 
@@ -14,19 +15,26 @@ struct Backend {
 
 class BackendPool {
 public:
-
-    // acess for health check func
-
     // add server to backend pool 
     void storeNewAddress(const struct sockaddr* addr);
 
-    // get next healthy server - Round Robin
-    Backend *RoundRobin();
+    // LB algos
+    Backend* RoundRobin();
 
-    // add some other LB algos
+    // Pool Statistics
+    size_t getHealthyCount() const;
+    size_t getUnhealthyCount() const;
+    void printStatus() const;
+
+
+    // Pool Management
+    
+
+    
     
 
 private:
     vector<Backend> servers;
     atomic<size_t> currInd = 0;
+    mutable shared_mutex serversMutex; // protects everything below it by being accessed by other threads, Ex: "dont touch servers vector while im using it"
 };
