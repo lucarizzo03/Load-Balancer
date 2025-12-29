@@ -93,6 +93,7 @@ size_t BackendPool::getUnhealthyCount() const {
 void BackendPool::printStatus() const {
     shared_lock<shared_mutex> lock(serversMutex);
 
+    // need here because of deadlock with shared_lock
     size_t healthy = 0;
     for (const auto& backend: servers) {
         if (backend.isHealthy.load()) {

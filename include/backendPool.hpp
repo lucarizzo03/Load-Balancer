@@ -26,9 +26,8 @@ public:
     size_t getUnhealthyCount() const;
     void printStatus() const;
 
-
     // Pool Management
-    
+
 
     
     
