@@ -5,9 +5,10 @@
 #include "include/backendPool.hpp"
 #include <netdb.h>
 #include <unistd.h>       // close(), read(), write()
-
-using namespace std;
-
+#include <sys/types.h>
+#include <sys/event.h>
+#include <sys/time.h>
+#include <unordered_map>
 
 
 
@@ -60,10 +61,16 @@ int main(int argc, char* argv[]) {
     }
 
     // ADD SOCKET RE-USE
+    int opt = 1;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
+        perror("setsockopt");
+        close(sockfd);
+        return 1;
+    }
 
     // bind socket
-    int bind = ::bind(sockfd, res->ai_addr, res->ai_addrlen);
-    if (bind == -1) {
+    int bindRes = ::bind(sockfd, res->ai_addr, res->ai_addrlen);
+    if (bindRes == -1) {
         perror("bind");
         close(sockfd);
         return 1;
@@ -79,40 +86,143 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // server loop
-    while(true) {
-        struct sockaddr_storage their_addr;
-        socklen_t addr_size;
-
-        addr_size = sizeof their_addr;
-        new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &addr_size);
-        if (new_fd == -1) {
-            perror("accept");
-            close(sockfd);
-            continue;
-        }
-
-        
-
-
-
-
-
+    // kqueue
+    int kq = kqueue();
+    // check kq init for error
+    if (kq == -1) {
+        perror("kq");
+        return 1;
     }
 
+    // kq event list
+    struct kevent eventList[1024];
 
-    
+    // kevent obj
+    struct kevent ev;
+
+    // register listenign once outside
+    EV_SET(&ev, sockfd, EVFILT_READ, EV_ADD, 0, 0, NULL);
 
 
+    if (kevent(kq, &ev, 1, NULL, 0, NULL) == - 1) {
+        perror("first kevent");
+        close(kq);
+        close(sockfd);
+        return 1;
+    }
 
+    // maps client <---> backend servers
+    unordered_map<int, int> pairs;
 
+    // server loop
+    while(true) {
+        int pending = kevent(kq, NULL, 0, eventList, 1024, NULL);
+        if (pending == -1) {
+            perror("server loop first event");
+            break;
+        }
 
-    
-    
+        // loop through pending events
+        for (int i = 0; i < pending; i++) {
+            struct kevent* event = &eventList[i];
 
+            // process events
+            if (event->ident == (uintptr_t)sockfd) {
+                struct sockaddr_storage theirAddr;
+                socklen_t addr_size = sizeof theirAddr;
+                int newfd = accept(sockfd, (struct sockaddr*)&theirAddr, &addr_size);
+
+                if (newfd == -1) {
+                    perror("newfd");
+                    continue;
+                }
+
+                Backend* backend = pool.RoundRobin();
+                if (!backend) {
+                    cerr << "No healthy backends" << endl;
+                    continue;
+                }
+
+                int backfd = socket(backend->address.ss_family, SOCK_STREAM, 0);
+                if (backfd == -1) {
+                    perror("backend socket");
+                    close(newfd);
+                    continue;
+                }
+
+                socklen_t back_len;
+                if (backend->address.ss_family == AF_INET) {
+                    back_len = sizeof(struct sockaddr_in);
+                }
+                else {
+                    back_len = sizeof(struct sockaddr_in6);
+                }
+
+                if (connect(backfd, (struct sockaddr*)&backend->address, back_len) == -1) {
+                    perror("conntect");
+                    close(newfd);
+                    close(backfd);
+                    continue;
+                }
+
+                struct kevent evPair[2];
+                EV_SET(&evPair[0], newfd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+                EV_SET(&evPair[1], backfd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+
+                if (kevent(kq, evPair, 2, NULL, 0, NULL) == -1) {
+                    perror("kevent: register client");
+                    close(newfd);
+                    close(backfd);
+                    continue;
+                }
+
+                pairs[newfd] = backfd;
+                pairs[backfd] = newfd;
+
+                cout << "New connection: " << newfd <<  " and " << backfd << endl;
+            }
+            else {
+                char buffer[8192];
+                ssize_t bytesReadIn = read(event->ident, buffer, sizeof(buffer));
+
+                if (bytesReadIn <= 0) {
+                    if (bytesReadIn == 0) {
+                        cout << "No bytes" << endl;
+                    }
+                    else {
+                        perror("reading");
+                    }
+
+                    int peer = pairs[event->ident];
+                    close(event->ident);
+                    close(peer);
+                    pairs.erase(event->ident);
+                    pairs.erase(peer);
+                }
+                else {
+                    int peer = pairs[event->ident];
+                    ssize_t written = write(peer, buffer, bytesReadIn);
+
+                    if (written == -1) {
+                        perror("write to peer");
+                        close(event->ident);
+                        close(peer);
+                        pairs.erase(event->ident);
+                        pairs.erase(peer);
+                    } else {
+                        cout << "Forwarded " << bytesReadIn << " bytes: fd=" 
+                                  << event->ident << " -> fd=" << peer << endl;
+                    }
+                }
+            }
+        }
+    }
 
     // need to start health checker 
     // need to start Load Balancer
+
+    close(kq);
+    close(sockfd);
 
     return 0;
 }
