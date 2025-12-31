@@ -16,7 +16,7 @@ public:
     void stop(); // stops health checker thread 
 
     void healthCheckLoop(); 
-    void checkSingleBackend(Backend& backend); 
+    void checkSingleBackend(const Backend& backend); 
 
 private:
     BackendPool pool;

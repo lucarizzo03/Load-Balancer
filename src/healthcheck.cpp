@@ -26,7 +26,7 @@ void Health::stop() {
 void Health::healthCheckLoop() {
     shared_lock<shared_mutex> lock(healthMutex);
     while (running.load()) {
-        vector<Backend> backend = pool.getBackend();
+        const vector<Backend>& backend = pool.getBackend();
 
         for (int i = 0; i < 100; i++) {
             size_t randomIndex = rand() % backend.size();
@@ -37,7 +37,7 @@ void Health::healthCheckLoop() {
 }
 
 // checking connection on a single backend server
-void Health::checkSingleBackend(Backend& backend) {
+void Health::checkSingleBackend(const Backend& backend) {
     int sock = socket(backend.address.ss_family, SOCK_STREAM, IPPROTO_TCP);
     if (sock == -1) {
         perror("socket single check");
