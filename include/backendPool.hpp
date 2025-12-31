@@ -29,8 +29,10 @@ public:
     size_t getHealthyCount() const;
     size_t getUnhealthyCount() const;
     void printStatus() const;
-    
 
+    // returns servers 
+    const vector<Backend>& getBackend() const;
+    
 private:
     vector<Backend> servers;
     atomic<size_t> currInd = 0;

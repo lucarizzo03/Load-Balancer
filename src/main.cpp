@@ -112,6 +112,12 @@ int main(int argc, char* argv[]) {
     // maps client <---> backend servers
     unordered_map<int, int> pairs;
 
+    // health checker object
+    Health health(pool);
+   
+    // spawns health checker thread
+    health.start();
+
    
 
     // server loop

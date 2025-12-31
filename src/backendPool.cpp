@@ -106,6 +106,10 @@ void BackendPool::printStatus() const {
     cout << "Total Unhealthy Servers: " << (servers.size() - healthy) << endl;
 }
 
+// returns servers
+const vector<Backend>& BackendPool::getBackend() const {
+    return servers;
+}
 
 
 
