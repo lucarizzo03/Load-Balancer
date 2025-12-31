@@ -9,11 +9,10 @@
 #include <sys/event.h>
 #include <sys/time.h>
 #include <unordered_map>
+#include <fcntl.h>
+#include "include/healthcheck.hpp"
 
-
-
-
-
+using namespace std;
 
 
 
@@ -60,7 +59,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // ADD SOCKET RE-USE
+    // ADD SOCKET RE-USE -- look this up
     int opt = 1;
     if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
         perror("setsockopt");
@@ -103,7 +102,6 @@ int main(int argc, char* argv[]) {
     // register listenign once outside
     EV_SET(&ev, sockfd, EVFILT_READ, EV_ADD, 0, 0, NULL);
 
-
     if (kevent(kq, &ev, 1, NULL, 0, NULL) == - 1) {
         perror("first kevent");
         close(kq);
@@ -113,6 +111,8 @@ int main(int argc, char* argv[]) {
 
     // maps client <---> backend servers
     unordered_map<int, int> pairs;
+
+   
 
     // server loop
     while(true) {
@@ -125,8 +125,9 @@ int main(int argc, char* argv[]) {
         // loop through pending events
         for (int i = 0; i < pending; i++) {
             struct kevent* event = &eventList[i];
-
+            
             // process events
+            // NEW CLIENT CONNECTION
             if (event->ident == (uintptr_t)sockfd) {
                 struct sockaddr_storage theirAddr;
                 socklen_t addr_size = sizeof theirAddr;
@@ -149,6 +150,8 @@ int main(int argc, char* argv[]) {
                     close(newfd);
                     continue;
                 }
+
+                
 
                 socklen_t back_len;
                 if (backend->address.ss_family == AF_INET) {
@@ -181,7 +184,7 @@ int main(int argc, char* argv[]) {
 
                 cout << "New connection: " << newfd <<  " and " << backfd << endl;
             }
-            else {
+            else { // DATA FROM CLIENT OR BACKEND
                 char buffer[8192];
                 ssize_t bytesReadIn = read(event->ident, buffer, sizeof(buffer));
 
@@ -218,8 +221,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // need to start health checker 
-    // need to start Load Balancer
+    // need to stop health checker 
 
     close(kq);
     close(sockfd);

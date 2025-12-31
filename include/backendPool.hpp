@@ -4,6 +4,7 @@
 #include <vector> 
 #include <atomic>
 #include <shared_mutex>
+#include <thread>
 
 using namespace std;
 
@@ -15,6 +16,9 @@ struct Backend {
 
 class BackendPool {
 public:
+    BackendPool();
+    ~BackendPool();
+
     // add server to backend pool 
     void storeNewAddress(const struct sockaddr* addr);
 
@@ -25,11 +29,6 @@ public:
     size_t getHealthyCount() const;
     size_t getUnhealthyCount() const;
     void printStatus() const;
-
-    // Pool Management
-
-
-    
     
 
 private:
