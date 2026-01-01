@@ -199,7 +199,7 @@ int main(int argc, char* argv[]) {
                     metric.recordConnectionLat(connectionsLatency);
                 }
 
-                struct kevent evPair[2];
+                struct kevent evPair[3];
                 EV_SET(&evPair[0], newfd, EVFILT_READ, EV_ADD, 0, 0, NULL);
                 EV_SET(&evPair[1], backfd, EVFILT_READ, EV_ADD, 0, 0, NULL);
                 EV_SET(&evPair[2], backfd, EVFILT_WRITE, EV_ADD | EV_ONESHOT, 0, 0, NULL);
