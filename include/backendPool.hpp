@@ -23,7 +23,7 @@ public:
     void storeNewAddress(const struct sockaddr* addr);
 
     // LB algos
-    Backend* RoundRobin();
+    optional<Backend> RoundRobin();
 
     // Pool Statistics
     size_t getHealthyCount() const;
@@ -31,7 +31,7 @@ public:
     void printStatus() const;
 
     // returns servers 
-    const vector<Backend>& getBackend() const;
+    optional<Backend> getBackend() const;
     
 private:
     vector<Backend> servers;

@@ -33,11 +33,11 @@ void BackendPool::storeNewAddress(const struct sockaddr* addr) {
 }
 
 // Round Robin LB algo
-Backend* BackendPool::RoundRobin() {
+optional<Backend> BackendPool::RoundRobin() {
     shared_lock<shared_mutex> lock(serversMutex);
 
     if (servers.empty()) {
-        return nullptr;
+        return nullopt;
     }
 
     // get curr index
@@ -51,14 +51,14 @@ Backend* BackendPool::RoundRobin() {
         // check if healthy and return
         if (candidate.isHealthy.load() == true) {
             currInd.store((index + 1) % servers.size());
-            return &candidate;
+            return make_optional<Backend>(candidate);
         }
 
         index = (index + 1) % servers.size();
         attempts++;
     }
 
-    return nullptr;
+    return nullopt;
 }
 
 // get total healthy servers
@@ -107,11 +107,15 @@ void BackendPool::printStatus() const {
 }
 
 // returns servers
-const vector<Backend>& BackendPool::getBackend() const {
-    return servers;
+optional<Backend> BackendPool::getBackend() const {
+    return make_optional<Backend>(servers);
 }
 
+// constructor 
+BackendPool::BackendPool() {};
 
+// destructor 
+BackendPool::~BackendPool() {};
 
 
 

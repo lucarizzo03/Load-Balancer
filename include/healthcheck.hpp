@@ -19,8 +19,8 @@ public:
     void checkSingleBackend(const Backend& backend); 
 
 private:
-    BackendPool pool;
+    BackendPool& pool;
     thread healthThread;
     mutable shared_mutex healthMutex;
-    atomic<bool> running{false};
+    atomic<bool> running{false}; // health check loop thread bool
 };
