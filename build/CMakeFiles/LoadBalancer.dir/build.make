@@ -86,17 +86,65 @@ CMakeFiles/LoadBalancer.dir/src/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LoadBalancer.dir/src/main.cpp.s"
 	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/Users/lucar/Desktop/Load Balancer/src/main.cpp" -o CMakeFiles/LoadBalancer.dir/src/main.cpp.s
 
+CMakeFiles/LoadBalancer.dir/src/backendPool.cpp.o: CMakeFiles/LoadBalancer.dir/flags.make
+CMakeFiles/LoadBalancer.dir/src/backendPool.cpp.o: /Users/lucar/Desktop/Load\ Balancer/src/backendPool.cpp
+CMakeFiles/LoadBalancer.dir/src/backendPool.cpp.o: CMakeFiles/LoadBalancer.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/lucar/Desktop/Load Balancer/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/LoadBalancer.dir/src/backendPool.cpp.o"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LoadBalancer.dir/src/backendPool.cpp.o -MF CMakeFiles/LoadBalancer.dir/src/backendPool.cpp.o.d -o CMakeFiles/LoadBalancer.dir/src/backendPool.cpp.o -c "/Users/lucar/Desktop/Load Balancer/src/backendPool.cpp"
+
+CMakeFiles/LoadBalancer.dir/src/backendPool.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/LoadBalancer.dir/src/backendPool.cpp.i"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "/Users/lucar/Desktop/Load Balancer/src/backendPool.cpp" > CMakeFiles/LoadBalancer.dir/src/backendPool.cpp.i
+
+CMakeFiles/LoadBalancer.dir/src/backendPool.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LoadBalancer.dir/src/backendPool.cpp.s"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/Users/lucar/Desktop/Load Balancer/src/backendPool.cpp" -o CMakeFiles/LoadBalancer.dir/src/backendPool.cpp.s
+
+CMakeFiles/LoadBalancer.dir/src/healthcheck.cpp.o: CMakeFiles/LoadBalancer.dir/flags.make
+CMakeFiles/LoadBalancer.dir/src/healthcheck.cpp.o: /Users/lucar/Desktop/Load\ Balancer/src/healthcheck.cpp
+CMakeFiles/LoadBalancer.dir/src/healthcheck.cpp.o: CMakeFiles/LoadBalancer.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/lucar/Desktop/Load Balancer/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/LoadBalancer.dir/src/healthcheck.cpp.o"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LoadBalancer.dir/src/healthcheck.cpp.o -MF CMakeFiles/LoadBalancer.dir/src/healthcheck.cpp.o.d -o CMakeFiles/LoadBalancer.dir/src/healthcheck.cpp.o -c "/Users/lucar/Desktop/Load Balancer/src/healthcheck.cpp"
+
+CMakeFiles/LoadBalancer.dir/src/healthcheck.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/LoadBalancer.dir/src/healthcheck.cpp.i"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "/Users/lucar/Desktop/Load Balancer/src/healthcheck.cpp" > CMakeFiles/LoadBalancer.dir/src/healthcheck.cpp.i
+
+CMakeFiles/LoadBalancer.dir/src/healthcheck.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LoadBalancer.dir/src/healthcheck.cpp.s"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/Users/lucar/Desktop/Load Balancer/src/healthcheck.cpp" -o CMakeFiles/LoadBalancer.dir/src/healthcheck.cpp.s
+
+CMakeFiles/LoadBalancer.dir/src/metrics.cpp.o: CMakeFiles/LoadBalancer.dir/flags.make
+CMakeFiles/LoadBalancer.dir/src/metrics.cpp.o: /Users/lucar/Desktop/Load\ Balancer/src/metrics.cpp
+CMakeFiles/LoadBalancer.dir/src/metrics.cpp.o: CMakeFiles/LoadBalancer.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/lucar/Desktop/Load Balancer/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/LoadBalancer.dir/src/metrics.cpp.o"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/LoadBalancer.dir/src/metrics.cpp.o -MF CMakeFiles/LoadBalancer.dir/src/metrics.cpp.o.d -o CMakeFiles/LoadBalancer.dir/src/metrics.cpp.o -c "/Users/lucar/Desktop/Load Balancer/src/metrics.cpp"
+
+CMakeFiles/LoadBalancer.dir/src/metrics.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/LoadBalancer.dir/src/metrics.cpp.i"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "/Users/lucar/Desktop/Load Balancer/src/metrics.cpp" > CMakeFiles/LoadBalancer.dir/src/metrics.cpp.i
+
+CMakeFiles/LoadBalancer.dir/src/metrics.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/LoadBalancer.dir/src/metrics.cpp.s"
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/Users/lucar/Desktop/Load Balancer/src/metrics.cpp" -o CMakeFiles/LoadBalancer.dir/src/metrics.cpp.s
+
 # Object files for target LoadBalancer
 LoadBalancer_OBJECTS = \
-"CMakeFiles/LoadBalancer.dir/src/main.cpp.o"
+"CMakeFiles/LoadBalancer.dir/src/main.cpp.o" \
+"CMakeFiles/LoadBalancer.dir/src/backendPool.cpp.o" \
+"CMakeFiles/LoadBalancer.dir/src/healthcheck.cpp.o" \
+"CMakeFiles/LoadBalancer.dir/src/metrics.cpp.o"
 
 # External object files for target LoadBalancer
 LoadBalancer_EXTERNAL_OBJECTS =
 
 LoadBalancer: CMakeFiles/LoadBalancer.dir/src/main.cpp.o
+LoadBalancer: CMakeFiles/LoadBalancer.dir/src/backendPool.cpp.o
+LoadBalancer: CMakeFiles/LoadBalancer.dir/src/healthcheck.cpp.o
+LoadBalancer: CMakeFiles/LoadBalancer.dir/src/metrics.cpp.o
 LoadBalancer: CMakeFiles/LoadBalancer.dir/build.make
 LoadBalancer: CMakeFiles/LoadBalancer.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir="/Users/lucar/Desktop/Load Balancer/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable LoadBalancer"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir="/Users/lucar/Desktop/Load Balancer/build/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_5) "Linking CXX executable LoadBalancer"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/LoadBalancer.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

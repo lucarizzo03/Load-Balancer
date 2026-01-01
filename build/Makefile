@@ -129,6 +129,54 @@ LoadBalancer/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LoadBalancer.dir/build.make CMakeFiles/LoadBalancer.dir/build
 .PHONY : LoadBalancer/fast
 
+src/backendPool.o: src/backendPool.cpp.o
+.PHONY : src/backendPool.o
+
+# target to build an object file
+src/backendPool.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LoadBalancer.dir/build.make CMakeFiles/LoadBalancer.dir/src/backendPool.cpp.o
+.PHONY : src/backendPool.cpp.o
+
+src/backendPool.i: src/backendPool.cpp.i
+.PHONY : src/backendPool.i
+
+# target to preprocess a source file
+src/backendPool.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LoadBalancer.dir/build.make CMakeFiles/LoadBalancer.dir/src/backendPool.cpp.i
+.PHONY : src/backendPool.cpp.i
+
+src/backendPool.s: src/backendPool.cpp.s
+.PHONY : src/backendPool.s
+
+# target to generate assembly for a file
+src/backendPool.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LoadBalancer.dir/build.make CMakeFiles/LoadBalancer.dir/src/backendPool.cpp.s
+.PHONY : src/backendPool.cpp.s
+
+src/healthcheck.o: src/healthcheck.cpp.o
+.PHONY : src/healthcheck.o
+
+# target to build an object file
+src/healthcheck.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LoadBalancer.dir/build.make CMakeFiles/LoadBalancer.dir/src/healthcheck.cpp.o
+.PHONY : src/healthcheck.cpp.o
+
+src/healthcheck.i: src/healthcheck.cpp.i
+.PHONY : src/healthcheck.i
+
+# target to preprocess a source file
+src/healthcheck.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LoadBalancer.dir/build.make CMakeFiles/LoadBalancer.dir/src/healthcheck.cpp.i
+.PHONY : src/healthcheck.cpp.i
+
+src/healthcheck.s: src/healthcheck.cpp.s
+.PHONY : src/healthcheck.s
+
+# target to generate assembly for a file
+src/healthcheck.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LoadBalancer.dir/build.make CMakeFiles/LoadBalancer.dir/src/healthcheck.cpp.s
+.PHONY : src/healthcheck.cpp.s
+
 src/main.o: src/main.cpp.o
 .PHONY : src/main.o
 
@@ -153,6 +201,30 @@ src/main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/LoadBalancer.dir/build.make CMakeFiles/LoadBalancer.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
 
+src/metrics.o: src/metrics.cpp.o
+.PHONY : src/metrics.o
+
+# target to build an object file
+src/metrics.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LoadBalancer.dir/build.make CMakeFiles/LoadBalancer.dir/src/metrics.cpp.o
+.PHONY : src/metrics.cpp.o
+
+src/metrics.i: src/metrics.cpp.i
+.PHONY : src/metrics.i
+
+# target to preprocess a source file
+src/metrics.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LoadBalancer.dir/build.make CMakeFiles/LoadBalancer.dir/src/metrics.cpp.i
+.PHONY : src/metrics.cpp.i
+
+src/metrics.s: src/metrics.cpp.s
+.PHONY : src/metrics.s
+
+# target to generate assembly for a file
+src/metrics.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/LoadBalancer.dir/build.make CMakeFiles/LoadBalancer.dir/src/metrics.cpp.s
+.PHONY : src/metrics.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -162,9 +234,18 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... LoadBalancer"
+	@echo "... src/backendPool.o"
+	@echo "... src/backendPool.i"
+	@echo "... src/backendPool.s"
+	@echo "... src/healthcheck.o"
+	@echo "... src/healthcheck.i"
+	@echo "... src/healthcheck.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
+	@echo "... src/metrics.o"
+	@echo "... src/metrics.i"
+	@echo "... src/metrics.s"
 .PHONY : help
 
 

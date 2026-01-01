@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include <sys/socket.h>   // Core: sockaddr, sockaddr_storage, socket(), bind()
 #include <netinet/in.h>   // Internet: sockaddr_in, sockaddr_in6, htons()
@@ -12,6 +13,26 @@ struct Backend {
     struct sockaddr_storage address; // holds both IPv4/IPv6
     socklen_t addr_len; // socklen_t universal size for address length
     atomic<bool> isHealthy = true; 
+
+    // Default constructor
+    Backend() = default;
+    
+    // Copy constructor - manually copy atomic value
+    Backend(const Backend& other) 
+        : addr_len(other.addr_len), 
+          isHealthy(other.isHealthy.load()) {  // Load atomic value
+        memcpy(&address, &other.address, sizeof(address));
+    }
+    
+    // Copy assignment operator
+    Backend& operator=(const Backend& other) {
+        if (this != &other) {
+            addr_len = other. addr_len;
+            isHealthy.store(other.isHealthy.load());  // Load then store
+            memcpy(&address, &other.address, sizeof(address));
+        }
+        return *this;
+    }
 };
 
 class BackendPool {
@@ -31,7 +52,7 @@ public:
     void printStatus() const;
 
     // returns servers 
-    optional<Backend> getBackend() const;
+    const vector<Backend>& getBackend() const;
     
 private:
     vector<Backend> servers;

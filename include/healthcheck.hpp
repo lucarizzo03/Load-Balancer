@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include "backendPool.hpp"
 #include <thread>

@@ -1,7 +1,7 @@
 #include <iostream>
-#include "include/healthcheck.hpp"
+#include "healthcheck.hpp"
 #include <thread>
-#include "include/backendPool.hpp"
+#include "backendPool.hpp"
 #include <unistd.h> 
 #include <future>
 
@@ -66,17 +66,17 @@ void Health::checkSingleBackend(const Backend& backend) {
 
     // timeout to prevent hanging
     struct timeval timeout;
-    timeout.tv_sec = 1.5;
-    timeout.tv_usec = 0;
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 500000;
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 
     int result = connect(sock, (struct sockaddr*)&backend.address, backend.addr_len);
 
     if (result == 0) {
-        // success
+       cout << "success" << endl;
     }
     else {
-        // failue
+        cout << "failure" << endl;
     }
 
     close(sock);

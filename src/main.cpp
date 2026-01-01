@@ -2,7 +2,7 @@
 #include <sys/socket.h>   // Core: sockaddr, sockaddr_storage, socket(), bind()
 #include <netinet/in.h>   // Internet: sockaddr_in, sockaddr_in6, htons()
 #include <arpa/inet.h>    // Munging: inet_pton(), inet_ntop()
-#include "include/backendPool.hpp"
+#include "backendPool.hpp"
 #include <netdb.h>
 #include <unistd.h>       // close(), read(), write()
 #include <sys/types.h>
@@ -10,7 +10,8 @@
 #include <sys/time.h>
 #include <unordered_map>
 #include <fcntl.h>
-#include "include/healthcheck.hpp"
+#include "healthcheck.hpp"
+#include "metrics.hpp"
 
 using namespace std;
 
@@ -25,7 +26,7 @@ int main(int argc, char* argv[]) {
         struct sockaddr_in addr;
         addr.sin_family = AF_INET;
         inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr);
-        addr.sin_port = htons(8000 + i);
+        addr.sin_port = htons(3000 + i);
         pool.storeNewAddress((struct sockaddr*)&addr);
     }
 
@@ -34,9 +35,11 @@ int main(int argc, char* argv[]) {
         struct sockaddr_in6 addr;
         addr.sin6_family = AF_INET6;
         inet_pton(AF_INET6, "::1", &addr.sin6_addr);
-        addr.sin6_port = htons(13000 + i);
+        addr.sin6_port = htons(8000 + i);
         pool.storeNewAddress((struct sockaddr*)&addr);
     }
+
+    cout << "completed init" << endl;
 
     struct addrinfo hints, *res;
     int sockfd, new_fd;
@@ -118,7 +121,14 @@ int main(int argc, char* argv[]) {
     // spawns health checker thread
     health.start();
 
-   
+    // metrics obj;
+    Metrics metric;
+
+    // Track when each client connection started (for full request latency)
+    unordered_map<int, chrono::steady_clock::time_point> clientRequestStartTimes;
+
+    // Track when backend connections started (for connection setup latency)
+    unordered_map<int, chrono::steady_clock::time_point> backendConnectStartTimes;
 
     // server loop
     while(true) {
@@ -137,6 +147,7 @@ int main(int argc, char* argv[]) {
             if (event->ident == (uintptr_t)sockfd) {
                 struct sockaddr_storage theirAddr;
                 socklen_t addr_size = sizeof theirAddr;
+                
                 int newfd = accept(sockfd, (struct sockaddr*)&theirAddr, &addr_size);
 
                 if (newfd == -1) {
@@ -144,51 +155,80 @@ int main(int argc, char* argv[]) {
                     continue;
                 }
 
-                Backend* backend = pool.RoundRobin();
+                optional<Backend> backend = pool.RoundRobin();
                 if (!backend) {
                     cerr << "No healthy backends" << endl;
                     continue;
                 }
 
-                int backfd = socket(backend->address.ss_family, SOCK_STREAM, 0);
+                // retrieve Backend obj
+                Backend back = backend.value();
+
+                int backfd = socket(back.address.ss_family, SOCK_STREAM, 0);
                 if (backfd == -1) {
                     perror("backend socket");
                     close(newfd);
                     continue;
                 }
 
-                
+                int flags = fcntl(backfd, F_GETFL, 0);
+                fcntl(backfd, F_SETFL, flags | O_NONBLOCK);
 
                 socklen_t back_len;
-                if (backend->address.ss_family == AF_INET) {
+                if (back.address.ss_family == AF_INET) {
                     back_len = sizeof(struct sockaddr_in);
                 }
                 else {
                     back_len = sizeof(struct sockaddr_in6);
                 }
 
-                if (connect(backfd, (struct sockaddr*)&backend->address, back_len) == -1) {
-                    perror("conntect");
-                    close(newfd);
-                    close(backfd);
-                    continue;
+                auto start = chrono::steady_clock::now();
+
+                if (connect(backfd, (struct sockaddr*)&back.address, back_len) == -1) {
+                   if (errno != EINPROGRESS) {
+                        perror("connect");
+                        close(newfd);
+                        close(backfd);
+                        continue;
+                    }
+                    backendConnectStartTimes[backfd] = start;
+                }
+                else {
+                    auto end = chrono::steady_clock::now();
+                    auto connectionsLatency = chrono::duration_cast<chrono::microseconds>(end - start).count();
+                    metric.recordConnectionLat(connectionsLatency);
                 }
 
                 struct kevent evPair[2];
                 EV_SET(&evPair[0], newfd, EVFILT_READ, EV_ADD, 0, 0, NULL);
                 EV_SET(&evPair[1], backfd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+                EV_SET(&evPair[2], backfd, EVFILT_WRITE, EV_ADD | EV_ONESHOT, 0, 0, NULL);
 
-                if (kevent(kq, evPair, 2, NULL, 0, NULL) == -1) {
+                if (kevent(kq, evPair, 3, NULL, 0, NULL) == -1) {
                     perror("kevent: register client");
                     close(newfd);
                     close(backfd);
+                    backendConnectStartTimes.erase(backfd);
                     continue;
                 }
 
                 pairs[newfd] = backfd;
                 pairs[backfd] = newfd;
+                clientRequestStartTimes[newfd] = chrono::steady_clock::now();
 
                 cout << "New connection: " << newfd <<  " and " << backfd << endl;
+            }
+            else if (event->filter == EVFILT_WRITE) {
+                if (backendConnectStartTimes.count(event->ident) > 0) {
+                    auto connectEnd = chrono::steady_clock::now();
+                    auto connectStart = backendConnectStartTimes[event->ident];
+                    auto connectionLatency = chrono::duration_cast<chrono::microseconds>(connectEnd - connectStart).count();
+                    
+                    metric.recordConnectionLat(connectionLatency);
+                    backendConnectStartTimes.erase(event->ident);
+                    
+                    cout << "Backend connection established: " << connectionLatency << " μs" << endl;
+                }
             }
             else { // DATA FROM CLIENT OR BACKEND
                 char buffer[8192];
@@ -207,28 +247,41 @@ int main(int argc, char* argv[]) {
                     close(peer);
                     pairs.erase(event->ident);
                     pairs.erase(peer);
+                    clientRequestStartTimes.erase(event->ident);
+                    clientRequestStartTimes.erase(peer);
                 }
                 else {
                     int peer = pairs[event->ident];
                     ssize_t written = write(peer, buffer, bytesReadIn);
-
                     if (written == -1) {
                         perror("write to peer");
                         close(event->ident);
                         close(peer);
                         pairs.erase(event->ident);
                         pairs.erase(peer);
-                    } else {
-                        cout << "Forwarded " << bytesReadIn << " bytes: fd=" 
-                                  << event->ident << " -> fd=" << peer << endl;
+                    } 
+                    else {
+                        if (clientRequestStartTimes.count(peer) > 0) {
+                            auto reqEnd = chrono::steady_clock:: now();
+                            auto reqStart = clientRequestStartTimes[peer];
+                            auto fullReqLatency = chrono::duration_cast<chrono::microseconds>(reqEnd - reqStart).count();
+                            
+                            // Record full request latency
+                            metric.recordFullReqLat(fullReqLatency);
+                            
+                            // Remove timer - this request is complete
+                            clientRequestStartTimes.erase(peer);
+                            
+                            cout << "Request completed: " << fullReqLatency << " μs (total)" << endl;
+                        }
+                        cout << "Forwarded " << bytesReadIn << " bytes: fd=" << event->ident << " -> fd=" << peer << endl;
                     }
                 }
             }
         }
     }
 
-    // need to stop health checker 
-
+    health.stop();
     close(kq);
     close(sockfd);
 

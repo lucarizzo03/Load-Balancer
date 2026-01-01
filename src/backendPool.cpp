@@ -2,7 +2,7 @@
 #include <sys/socket.h>   // Core: sockaddr, sockaddr_storage, socket(), bind()
 #include <netinet/in.h>   // Internet: sockaddr_in, sockaddr_in6, htons()
 #include <arpa/inet.h>    // Munging: inet_pton(), inet_ntop()
-#include "include/backendPool.hpp"
+#include "backendPool.hpp"
 #include <shared_mutex>
 #include <cstring>
 
@@ -107,8 +107,8 @@ void BackendPool::printStatus() const {
 }
 
 // returns servers
-optional<Backend> BackendPool::getBackend() const {
-    return make_optional<Backend>(servers);
+const vector<Backend>& BackendPool::getBackend() const {
+    return servers;
 }
 
 // constructor 

@@ -21,6 +21,13 @@ endif()
 
 find_package(Threads REQUIRED)
 
-add_executable(LoadBalancer src/main.cpp)
+include_directories(${CMAKE_SOURCE_DIR}/include)
+
+add_executable(LoadBalancer 
+    src/main.cpp
+    src/backendPool.cpp
+    src/healthcheck.cpp
+    src/metrics.cpp
+)
 
 target_link_libraries(LoadBalancer PRIVATE Threads::Threads)
