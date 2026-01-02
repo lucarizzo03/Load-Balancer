@@ -51,6 +51,10 @@ void Health::healthCheckLoop() {
         for (auto& fut : futures) {
             fut.wait();
         }
+
+        // Print summary instead of individual results
+        cout << "Health check complete: " << pool.getHealthyCount() 
+             << " healthy, " << pool.getUnhealthyCount() << " unhealthy" << endl;
         
         std::this_thread::sleep_for(std::chrono:: seconds(5));
     }
@@ -72,12 +76,14 @@ void Health::checkSingleBackend(const Backend& backend) {
 
     int result = connect(sock, (struct sockaddr*)&backend.address, backend.addr_len);
 
+    /*
     if (result == 0) {
        cout << "success" << endl;
     }
     else {
-        cout << "failure" << endl;
+        cout << "failure fucker" << endl;
     }
+     */
 
     close(sock);
     return;

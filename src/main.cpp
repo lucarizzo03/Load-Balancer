@@ -21,8 +21,8 @@ using namespace std;
 int main(int argc, char* argv[]) {
     BackendPool pool;
 
-    // init for IPv4 (8000 - 12999)
-    for (int i = 0; i < 5000; i++) {
+    // init for IPv4 (3000 - 3499)
+    for (int i = 0; i < 500; i++) {
         struct sockaddr_in addr;
         addr.sin_family = AF_INET;
         inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr);
@@ -30,12 +30,12 @@ int main(int argc, char* argv[]) {
         pool.storeNewAddress((struct sockaddr*)&addr);
     }
 
-    // init for IPv6 (13000 - 17999)
-    for (int i = 0; i < 5000; i++) {
+    // init for IPv6 (3500 - 3999)
+    for (int i = 0; i < 500; i++) {
         struct sockaddr_in6 addr;
         addr.sin6_family = AF_INET6;
         inet_pton(AF_INET6, "::1", &addr.sin6_addr);
-        addr.sin6_port = htons(8000 + i);
+        addr.sin6_port = htons(3500 + i);
         pool.storeNewAddress((struct sockaddr*)&addr);
     }
 
@@ -130,6 +130,8 @@ int main(int argc, char* argv[]) {
     // Track when backend connections started (for connection setup latency)
     unordered_map<int, chrono::steady_clock::time_point> backendConnectStartTimes;
 
+    unordered_map<int, bool> backendConnected;
+
     // server loop
     while(true) {
         int pending = kevent(kq, NULL, 0, eventList, 1024, NULL);
@@ -196,15 +198,15 @@ int main(int argc, char* argv[]) {
                 else {
                     auto end = chrono::steady_clock::now();
                     auto connectionsLatency = chrono::duration_cast<chrono::microseconds>(end - start).count();
+                    cout << "1: " << connectionsLatency << endl;
                     metric.recordConnectionLat(connectionsLatency);
                 }
 
-                struct kevent evPair[3];
-                EV_SET(&evPair[0], newfd, EVFILT_READ, EV_ADD, 0, 0, NULL);
-                EV_SET(&evPair[1], backfd, EVFILT_READ, EV_ADD, 0, 0, NULL);
-                EV_SET(&evPair[2], backfd, EVFILT_WRITE, EV_ADD | EV_ONESHOT, 0, 0, NULL);
+                struct kevent evPair[2];
+                EV_SET(&evPair[0], backfd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+                EV_SET(&evPair[1], backfd, EVFILT_WRITE, EV_ADD | EV_ONESHOT, 0, 0, NULL);
 
-                if (kevent(kq, evPair, 3, NULL, 0, NULL) == -1) {
+                if (kevent(kq, evPair, 2, NULL, 0, NULL) == -1) {
                     perror("kevent: register client");
                     close(newfd);
                     close(backfd);
@@ -214,6 +216,7 @@ int main(int argc, char* argv[]) {
 
                 pairs[newfd] = backfd;
                 pairs[backfd] = newfd;
+                backendConnected[backfd] = false;
                 clientRequestStartTimes[newfd] = chrono::steady_clock::now();
 
                 cout << "New connection: " << newfd <<  " and " << backfd << endl;
@@ -223,11 +226,20 @@ int main(int argc, char* argv[]) {
                     auto connectEnd = chrono::steady_clock::now();
                     auto connectStart = backendConnectStartTimes[event->ident];
                     auto connectionLatency = chrono::duration_cast<chrono::microseconds>(connectEnd - connectStart).count();
-                    
+                    cout << "2: " << connectionLatency << endl;
                     metric.recordConnectionLat(connectionLatency);
                     backendConnectStartTimes.erase(event->ident);
+
+                    backendConnected[event->ident] = true;
                     
                     cout << "Backend connection established: " << connectionLatency << " μs" << endl;
+
+                    int clientFd = pairs[event->ident];
+                    struct kevent clientEv;
+                    EV_SET(&clientEv, clientFd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+                    if (kevent(kq, &clientEv, 1, NULL, 0, NULL) == -1) {
+                        perror("kevent: add client read");
+                    }
                 }
             }
             else { // DATA FROM CLIENT OR BACKEND
@@ -259,13 +271,17 @@ int main(int argc, char* argv[]) {
                         close(peer);
                         pairs.erase(event->ident);
                         pairs.erase(peer);
+                        clientRequestStartTimes.erase(event->ident);
+                        clientRequestStartTimes.erase(peer);
+                        backendConnected.erase(event->ident);
+                        backendConnected.erase(peer);
                     } 
                     else {
                         if (clientRequestStartTimes.count(peer) > 0) {
                             auto reqEnd = chrono::steady_clock:: now();
                             auto reqStart = clientRequestStartTimes[peer];
                             auto fullReqLatency = chrono::duration_cast<chrono::microseconds>(reqEnd - reqStart).count();
-                            
+                            cout << "3: " << fullReqLatency << endl;
                             // Record full request latency
                             metric.recordFullReqLat(fullReqLatency);
                             
@@ -273,6 +289,15 @@ int main(int argc, char* argv[]) {
                             clientRequestStartTimes.erase(peer);
                             
                             cout << "Request completed: " << fullReqLatency << " μs (total)" << endl;
+                            close(event->ident);
+                            close(peer);
+                            pairs.erase(event->ident);
+                            pairs.erase(peer);
+                            backendConnected.erase(event->ident);
+                            backendConnected.erase(peer);
+
+
+
                         }
                         cout << "Forwarded " << bytesReadIn << " bytes: fd=" << event->ident << " -> fd=" << peer << endl;
                     }
