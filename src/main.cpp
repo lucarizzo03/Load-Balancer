@@ -130,8 +130,6 @@ int main(int argc, char* argv[]) {
     // Track when backend connections started (for connection setup latency)
     unordered_map<int, chrono::steady_clock::time_point> backendConnectStartTimes;
 
-    unordered_map<int, bool> backendConnected;
-
     // server loop
     while(true) {
         int pending = kevent(kq, NULL, 0, eventList, 1024, NULL);
@@ -216,7 +214,6 @@ int main(int argc, char* argv[]) {
 
                 pairs[newfd] = backfd;
                 pairs[backfd] = newfd;
-                backendConnected[backfd] = false;
                 clientRequestStartTimes[newfd] = chrono::steady_clock::now();
 
                 cout << "New connection: " << newfd <<  " and " << backfd << endl;
@@ -229,8 +226,6 @@ int main(int argc, char* argv[]) {
                     cout << "2: " << connectionLatency << endl;
                     metric.recordConnectionLat(connectionLatency);
                     backendConnectStartTimes.erase(event->ident);
-
-                    backendConnected[event->ident] = true;
                     
                     cout << "Backend connection established: " << connectionLatency << " μs" << endl;
 
@@ -245,7 +240,6 @@ int main(int argc, char* argv[]) {
             else { // DATA FROM CLIENT OR BACKEND
                 char buffer[8192];
                 ssize_t bytesReadIn = read(event->ident, buffer, sizeof(buffer));
-
                 if (bytesReadIn <= 0) {
                     if (bytesReadIn == 0) {
                         cout << "No bytes" << endl;
@@ -273,8 +267,6 @@ int main(int argc, char* argv[]) {
                         pairs.erase(peer);
                         clientRequestStartTimes.erase(event->ident);
                         clientRequestStartTimes.erase(peer);
-                        backendConnected.erase(event->ident);
-                        backendConnected.erase(peer);
                     } 
                     else {
                         if (clientRequestStartTimes.count(peer) > 0) {
@@ -293,11 +285,6 @@ int main(int argc, char* argv[]) {
                             close(peer);
                             pairs.erase(event->ident);
                             pairs.erase(peer);
-                            backendConnected.erase(event->ident);
-                            backendConnected.erase(peer);
-
-
-
                         }
                         cout << "Forwarded " << bytesReadIn << " bytes: fd=" << event->ident << " -> fd=" << peer << endl;
                     }
