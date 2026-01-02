@@ -238,7 +238,7 @@ int main(int argc, char* argv[]) {
                 }
             }
             else { // DATA FROM CLIENT OR BACKEND
-                char buffer[8192];
+                char buffer[65536];
                 ssize_t bytesReadIn = read(event->ident, buffer, sizeof(buffer));
                 if (bytesReadIn <= 0) {
                     if (bytesReadIn == 0) {
