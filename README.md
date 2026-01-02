@@ -56,9 +56,7 @@ This project was built using knowledge from:
 - **"Kqueue: A generic and scalable event notification facility"** by Jonathan Lemon (USENIX 2001) - Original paper describing the kqueue API design and implementation on FreeBSD/macOS
 
 ### Additional Learning
-- POSIX sockets documentation
 - macOS `kqueue(2)` and `kevent(2)` man pages
-- RFC 793 (TCP), RFC 791 (IP)
 
 ---
 
