@@ -33,6 +33,35 @@ wrk -t12 -c400 -d30s http://localhost:8080/
 
 ---
 
+## 🏗️ Architecture Highlights
+
+The performance is achieved through:
+
+1. **Event-Driven I/O:** kqueue (macOS) provides O(1) event notification
+2. **Non-Blocking Sockets:** All I/O operations use `O_NONBLOCK`
+3. **Connection Reuse:** HTTP keep-alive reduces TCP handshake overhead
+4. **Single-Threaded Event Loop:** Eliminates context switching for I/O operations
+5. **Parallel Health Checking:** 50 worker threads monitor 1,000 backends independently
+
+---
+
+## 📚 Technical Resources
+
+This project was built using knowledge from:
+
+### Network Programming
+- **Beej's Guide to Network Programming** - Comprehensive resource for socket programming, covering Berkeley sockets API, client-server architecture, and TCP/IP fundamentals
+
+### Event-Driven I/O
+- **"Kqueue: A generic and scalable event notification facility"** by Jonathan Lemon (USENIX 2001) - Original paper describing the kqueue API design and implementation on FreeBSD/macOS
+
+### Additional Learning
+- POSIX sockets documentation
+- macOS `kqueue(2)` and `kevent(2)` man pages
+- RFC 793 (TCP), RFC 791 (IP)
+
+---
+
 ## 🎯 Performance Analysis
 
 ### Throughput
@@ -60,18 +89,6 @@ P99:       ~80 ms (estimated)
 
 ---
 
-## 🏗️ Architecture Highlights
-
-The performance is achieved through:
-
-1. **Event-Driven I/O:** kqueue (macOS) provides O(1) event notification
-2. **Non-Blocking Sockets:** All I/O operations use `O_NONBLOCK`
-3. **Connection Reuse:** HTTP keep-alive reduces TCP handshake overhead
-4. **Single-Threaded Event Loop:** Eliminates context switching for I/O operations
-5. **Parallel Health Checking:** 50 worker threads monitor 1,000 backends independently
-
----
-
 ## 📈 Performance Comparison
 
 ### vs Other Load Balancers (Approximate)
@@ -89,24 +106,20 @@ The performance is achieved through:
 
 ---
 
-## 🔬 Test Details
+## 🔬 Implementation Details
 
-### Backend Servers
+### Core Technologies
+- **Language:** C++17
+- **Event Loop:** kqueue (macOS/BSD)
+- **Sockets:** POSIX Berkeley sockets
+- **Concurrency:** Single-threaded event loop + multi-threaded health checks
+- **Load Balancing:** Round-robin algorithm
+
+### Backend Configuration
 - **Count:** 1,000 total (500 IPv4 on ports 3000-3499, 500 IPv6 on ports 3500-3999)
 - **Type:** HTTP echo servers (for testing purposes)
 - **Response:** ~200 bytes per request
 - **Health Checks:** Active monitoring every 5 seconds
-
-### Client Configuration
-- **wrk:** 12 threads, 400 connections
-- **HTTP:** Keep-alive enabled (connection reuse)
-- **Network:** Local loopback (no real network latency)
-
-### Load Balancer Configuration
-- **Algorithm:** Round-robin
-- **Event Loop:** kqueue (single-threaded)
-- **Health Monitor:** 50 thread pool, 5-second intervals
-- **Buffer Size:** 8 KB per connection
 
 ---
 
@@ -142,8 +155,8 @@ cmake --build build
 # Terminal 1: Start load balancer
 ./build/LoadBalancer
 
-# Terminal 2: Run 1,000 backend servers on ports 3000-3999
-# (Implementation-specific - add your backend setup here)
+# Terminal 2: Start backend servers
+# (Setup 1,000 servers on ports 3000-3999)
 
 # Terminal 3: Benchmark
 wrk -t12 -c400 -d30s http://localhost:8080/
@@ -151,28 +164,13 @@ wrk -t12 -c400 -d30s http://localhost:8080/
 
 ---
 
-## 📝 Results Interpretation
-
-### Good Performance Indicators
-✅ High throughput (>30k req/sec)  
-✅ Low error rate (<1%)  
-✅ Consistent latency (low stdev)  
-✅ No timeout/connection errors
-
-### What the Errors Mean
-- **Read errors (394):** Client/backend closed connection during transfer (normal under stress)
-- **Connect errors (0):** Load balancer accepted all connections ✅
-- **Timeout errors (0):** No hung requests ✅
-
----
-
 ## 🎯 Key Takeaways
 
 This load balancer demonstrates:
 - Production-grade throughput (40k req/sec)
-- Event-driven architecture efficiency
+- Event-driven architecture efficiency (kqueue)
 - Proper connection lifecycle management
 - Scalability to 1,000 backends
 - Reliability under sustained load (99.97% success rate)
 
-**Built from scratch in C++ using low-level systems programming (sockets, kqueue, POSIX threads).**
+**Built from scratch in C++ using low-level systems programming.**
