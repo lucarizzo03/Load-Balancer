@@ -281,10 +281,6 @@ int main(int argc, char* argv[]) {
                             clientRequestStartTimes.erase(peer);
                             
                             cout << "Request completed: " << fullReqLatency << " μs (total)" << endl;
-                            close(event->ident);
-                            close(peer);
-                            pairs.erase(event->ident);
-                            pairs.erase(peer);
                         }
                         cout << "Forwarded " << bytesReadIn << " bytes: fd=" << event->ident << " -> fd=" << peer << endl;
                     }
