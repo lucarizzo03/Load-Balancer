@@ -148,6 +148,7 @@ int main(int argc, char* argv[]) {
                 struct sockaddr_storage theirAddr;
                 socklen_t addr_size = sizeof theirAddr;
                 
+                // client socket
                 int newfd = accept(sockfd, (struct sockaddr*)&theirAddr, &addr_size);
 
                 if (newfd == -1) {
@@ -164,6 +165,7 @@ int main(int argc, char* argv[]) {
                 // retrieve Backend obj
                 Backend back = backend.value();
 
+                // backend socket
                 int backfd = socket(back.address.ss_family, SOCK_STREAM, 0);
                 if (backfd == -1) {
                     perror("backend socket");
