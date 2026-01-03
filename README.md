@@ -2,7 +2,7 @@
 
 This load balancer was stress-tested using `wrk` to evaluate event loop efficiency, connection management, and throughput under heavy concurrent load.
 
-## 📊 Latest Benchmark Results
+## Latest Benchmark Results
 
 Tested with 400 concurrent connections against 1,000 backend servers (500 IPv4 + 500 IPv6) on localhost.
 
@@ -33,7 +33,7 @@ wrk -t12 -c400 -d30s http://localhost:8080/
 
 ---
 
-## 🏗️ Architecture Highlights
+## Architecture Highlights
 
 The performance is achieved through:
 
@@ -45,7 +45,7 @@ The performance is achieved through:
 
 ---
 
-## 📚 Technical Resources
+## Technical Resources
 
 This project was built using knowledge from:
 
@@ -60,7 +60,7 @@ This project was built using knowledge from:
 
 ---
 
-## 🎯 Performance Analysis
+## Performance Analysis
 
 ### Throughput
 - **40,037 req/sec** sustained over 30 seconds
@@ -87,7 +87,7 @@ P99:       ~80 ms (estimated)
 
 ---
 
-## 📈 Performance Comparison
+## Performance Comparison
 
 ### vs Other Load Balancers (Approximate)
 
@@ -104,7 +104,7 @@ P99:       ~80 ms (estimated)
 
 ---
 
-## 🔬 Implementation Details
+## Implementation Details
 
 ### Core Technologies
 - **Language:** C++17
@@ -121,7 +121,7 @@ P99:       ~80 ms (estimated)
 
 ---
 
-## ⚠️ Testing Caveats
+## Testing Caveats
 
 1. **Localhost Testing:** No real network latency (~0.01ms loopback vs 1-50ms real network)
 2. **Simple Backends:** Echo servers have minimal processing time
@@ -136,7 +136,7 @@ Real-world performance will vary based on:
 
 ---
 
-## 🚀 How to Reproduce
+## How to Reproduce
 
 ### Prerequisites
 ```bash
@@ -162,7 +162,7 @@ wrk -t12 -c400 -d30s http://localhost:8080/
 
 ---
 
-## 🎯 Key Takeaways
+## Key Takeaways
 
 This load balancer demonstrates:
 - Production-grade throughput (40k req/sec)
