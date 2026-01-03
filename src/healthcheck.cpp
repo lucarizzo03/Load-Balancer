@@ -76,14 +76,14 @@ void Health::checkSingleBackend(const Backend& backend) {
 
     int result = connect(sock, (struct sockaddr*)&backend.address, backend.addr_len);
 
-    /*
+    
     if (result == 0) {
        cout << "success" << endl;
     }
     else {
-        cout << "failure fucker" << endl;
+        cout << "failure" << endl;
     }
-     */
+    
 
     close(sock);
     return;
