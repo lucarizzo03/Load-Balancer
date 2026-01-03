@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
     struct addrinfo hints, *res;
     int sockfd, new_fd;
 
-    memset(&hints, 0, sizeof hints);
+    memset(&hints, 0, sizeof hints); // sets all the memory bytes of hints to 0
     hints.ai_family = AF_UNSPEC;  // use IPv4 or IPv6, whichever
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;  // fill in IP for me
