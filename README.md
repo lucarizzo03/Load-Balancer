@@ -9,12 +9,12 @@ Tested with 400 concurrent connections against 1,000 backend servers (500 IPv4 +
 ### Key Metrics (Best Run)
 | Metric | Value |
 |--------|-------|
-| **Throughput** | 40,037 requests/sec |
-| **Total Requests** | 1,204,698 (30 seconds) |
-| **Data Transferred** | 228.63 MB @ 7.60 MB/sec |
-| **Average Latency** | 18.15 ms |
-| **Max Latency** | 371.05 ms |
-| **Error Rate** | 0.033% (394 errors / 1.2M requests) |
+| **Throughput** | 42,236 requests/sec |
+| **Total Requests** | 1,270,294 (30 seconds) |
+| **Data Transferred** | 241.08 MB @ 8.02 MB/sec |
+| **Average Latency** | 18.08 ms |
+| **Max Latency** | 313.02 ms |
+| **Error Rate** | 0.029% (366 errors / 1.2M requests) |
 
 ### Test Configuration
 ```bash
