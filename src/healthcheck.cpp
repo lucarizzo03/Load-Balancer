@@ -33,7 +33,7 @@ void Health::healthCheckLoop() {
             vector<Backend>& backends = pool.getBackend();
             
             // Divide backends among worker threads
-            size_t backendsPerThread = backends.size() / NUM_WORKER_THREADS; // 200 per thread
+            size_t backendsPerThread = backends.size() / NUM_WORKER_THREADS; // 20 per thread
             vector<future<void>> futures;
             
             for (size_t i = 0; i < NUM_WORKER_THREADS; i++) {
