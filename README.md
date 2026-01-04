@@ -14,7 +14,7 @@ Tested with 400 concurrent connections against 1,000 backend servers (500 IPv4 +
 | **Data Transferred** | 241.08 MB @ 8.02 MB/sec |
 | **Average Latency** | 18.08 ms |
 | **Max Latency** | 313.02 ms |
-| **Error Rate** | 0.029% (366 errors / 1.2M requests) |
+| **Error Rate** | 0.029% (366 errors / 1.27M requests) |
 
 ### Test Configuration
 ```bash
