@@ -52,10 +52,12 @@ public:
     void printStatus() const;
 
     // returns servers 
-    const vector<Backend>& getBackend() const;
+    vector<Backend>& getBackend();
+
+    // protects everything below it by being accessed by other threads, Ex: "dont touch servers vector while im using it"
+    mutable shared_mutex serversMutex; 
     
 private:
     vector<Backend> servers;
     atomic<size_t> currInd = 0;
-    mutable shared_mutex serversMutex; // protects everything below it by being accessed by other threads, Ex: "dont touch servers vector while im using it"
 };

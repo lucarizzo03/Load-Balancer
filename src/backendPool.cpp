@@ -107,7 +107,7 @@ void BackendPool::printStatus() const {
 }
 
 // returns servers
-const vector<Backend>& BackendPool::getBackend() const {
+vector<Backend>& BackendPool::getBackend() {
     return servers;
 }
 

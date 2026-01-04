@@ -913,4 +913,6 @@ CMakeFiles/LoadBalancer.dir/src/main.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk/usr/include/sys/_types/_s_ifmt.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk/usr/include/sys/_types/_filesec_t.h \
   /Users/lucar/Desktop/Load\ Balancer/include/healthcheck.hpp \
-  /Users/lucar/Desktop/Load\ Balancer/include/metrics.hpp
+  /Users/lucar/Desktop/Load\ Balancer/include/metrics.hpp \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk/usr/include/c++/v1/csignal \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk/usr/include/signal.h

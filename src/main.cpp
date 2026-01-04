@@ -12,13 +12,22 @@
 #include <fcntl.h>
 #include "healthcheck.hpp"
 #include "metrics.hpp"
+#include <csignal>
+#include <atomic>
 
 using namespace std;
 
 
-
+atomic<bool> running(true);
+void signalHandler(int signum) {
+    cout << "\nShutting down gracefully..." << endl;
+    running.store(false);
+}
 
 int main(int argc, char* argv[]) {
+    signal(SIGINT, signalHandler);   
+    signal(SIGTERM, signalHandler);  
+    
     BackendPool pool;
 
     // init for IPv4 (3000 - 3499)
@@ -294,6 +303,9 @@ int main(int argc, char* argv[]) {
     health.stop();
     close(kq);
     close(sockfd);
+
+    pool.printStatus();
+    metric.printMetrics();
 
     return 0;
 }

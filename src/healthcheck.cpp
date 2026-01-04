@@ -25,68 +25,71 @@ void Health::stop() {
 
 // health checker loop - runs every five seconds - parralell health checking
 void Health::healthCheckLoop() {
-   const size_t NUM_WORKER_THREADS = 50;
+    const size_t NUM_WORKER_THREADS = 50;
     
     while (running.load()) {
-        const vector<Backend>& backends = pool.getBackend();
-        
-        // Divide backends among worker threads
-        size_t backendsPerThread = backends.size() / NUM_WORKER_THREADS; // 200 per thread
-        vector<future<void>> futures;
-        
-        for (size_t i = 0; i < NUM_WORKER_THREADS; i++) {
-            size_t start = i * backendsPerThread;
-            size_t end = (i == NUM_WORKER_THREADS - 1) ? backends.size() : start + backendsPerThread;
+        {
+            shared_lock<shared_mutex> lock(healthMutex);
+            vector<Backend>& backends = pool.getBackend();
             
-            // Launch async health checks 
-            futures.push_back(async(launch::async, [this, &backends, start, end]() {
-                for (size_t j = start; j < end; j++) {
-                    if (!running.load()) return;  // early exit if stopping
-                    checkSingleBackend(backends[j]);
-                }
-            }));
-        }
-        
-        // Wait for all health checks to complete
-        for (auto& fut : futures) {
-            fut.wait();
-        }
+            // Divide backends among worker threads
+            size_t backendsPerThread = backends.size() / NUM_WORKER_THREADS; // 200 per thread
+            vector<future<void>> futures;
+            
+            for (size_t i = 0; i < NUM_WORKER_THREADS; i++) {
+                size_t start = i * backendsPerThread;
+                size_t end = (i == NUM_WORKER_THREADS - 1) ? backends.size() : start + backendsPerThread;
+                
+                // Launch async health checks 
+                futures.push_back(async(launch::async, [this, &backends, start, end]() {
+                    for (size_t j = start; j < end; j++) {
+                        if (!running.load()) return;  // early exit if stopping
+                        checkSingleBackend(backends[j]);
+                    }
+                }));
+            }
+            
+            // Wait for all health checks to complete
+            for (auto& fut : futures) {
+                fut.wait();
+            }
 
-        // Print summary instead of individual results
-        cout << "Health check complete: " << pool.getHealthyCount() 
-             << " healthy, " << pool.getUnhealthyCount() << " unhealthy" << endl;
-        
+            // Print summary instead of individual results
+            cout << "Health check complete: " << pool.getHealthyCount() 
+                << " healthy, " << pool.getUnhealthyCount() << " unhealthy" << endl;
+
+        }
         std::this_thread::sleep_for(std::chrono:: seconds(5));
     }
 }
 
 // checking connection on a single backend server
-void Health::checkSingleBackend(const Backend& backend) {
+void Health::checkSingleBackend(Backend& backend) {
     int sock = socket(backend.address.ss_family, SOCK_STREAM, IPPROTO_TCP);
     if (sock == -1) {
+        backend.isHealthy.store(false);
         perror("socket single check");
         return;
     }
 
     // timeout to prevent hanging
     struct timeval timeout;
-    timeout.tv_sec = 1;
+    timeout.tv_sec = 0;
     timeout.tv_usec = 500000;
+    setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 
     int result = connect(sock, (struct sockaddr*)&backend.address, backend.addr_len);
 
-    
     if (result == 0) {
-       cout << "success" << endl;
+        backend.isHealthy.store(true);
     }
     else {
-        cout << "failure" << endl;
+        backend.isHealthy.store(false);
     }
     
 
     close(sock);
-    return;
 }
 
 // constructor
