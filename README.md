@@ -6,7 +6,7 @@ This load balancer was stress-tested using `wrk` to evaluate event loop efficien
 
 Tested with 400 concurrent connections against 1,000 backend servers (500 IPv4 + 500 IPv6) on localhost.
 
-### Key Metrics
+### Key Metrics (Best Run)
 | Metric | Value |
 |--------|-------|
 | **Throughput** | 40,037 requests/sec |
