@@ -95,7 +95,7 @@ P99:       ~80 ms (estimated)
 
 | Load Balancer | Typical Throughput | Latency (P50) |
 |---------------|-------------------|---------------|
-| **This Project** | 40k req/sec | ~12-18 ms |
+| **This Project** | 42k req/sec | ~12-18 ms |
 | NGINX | 30-50k req/sec | 10-20 ms |
 | HAProxy | 40-60k req/sec | 5-15 ms |
 | Envoy | 30-45k req/sec | 15-30 ms |
