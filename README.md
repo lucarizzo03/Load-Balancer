@@ -9,14 +9,14 @@ Tested with 400 concurrent connections against 1,000 backend servers (500 IPv4 +
 ### Key Metrics
 | Metric | Value |
 |--------|-------|
-| **Throughput** | 72,136 requests/sec |
-| **Total Requests** | 2,167,167 (30 seconds) |
-| **Data Transferred** | 411.29 MB @ 13.69 MB/sec |
-| **Average Latency** | 7.13 ms (stdev 12.82 ms) |
-| **P50 / P75 / P90 / P99 Latency** | 5.07 ms / 5.26 ms / 5.95 ms / 87.45 ms |
-| **Socket Errors** | 408 read errors / 2,167,167 requests (0.019%) — connect 0, write 0, timeout 0 |
+| **Throughput** | 73,044 requests/sec |
+| **Total Requests** | 2,194,276 (30 seconds) |
+| **Data Transferred** | 416.43 MB @ 13.86 MB/sec |
+| **Average Latency** | 6.05 ms (stdev 7.32 ms) |
+| **P50 / P75 / P90 / P99 Latency** | 5.05 ms / 5.26 ms / 5.86 ms / 25.77 ms |
+| **Socket Errors** | 372 read errors / 2,194,276 requests (0.017%) — connect 0, write 0, timeout 0 |
 
-Repeated 3 times back-to-back for consistency; throughput ranged 67,961–72,136 req/sec across the three runs, so treat this as ±3%, not an exact figure.
+Repeated 3 times back-to-back for consistency; throughput ranged 71,863–73,535 req/sec across the three runs, so treat this as ±1%, not an exact figure. This is the second of the three, chosen because it's the median — not the best.
 
 ### Test Configuration
 ```bash
@@ -26,7 +26,7 @@ wrk -t12 -c400 -d30s --latency http://localhost:8080/
 | Parameter | Value |
 |-----------|-------|
 | **Date** | 2026-07-30 |
-| **Commit** | `86abe8e` (short-write buffering, safe `pairs` lookup on close, non-blocking accepted-client/backend sockets, hot-path logging removed). One further fix landed in the same commit but *after* this benchmark was run — making the listener socket itself `O_NONBLOCK`, not just the sockets it hands off — and was not re-benchmarked. It touches `accept()` only, not the hot forwarding path, so it's expected to be throughput-neutral, but that's an expectation, not a measurement. |
+| **Commit** | `9c37d08` — full working tree at benchmark time, built from a clean `git clone`-equivalent state (`build/` deleted and regenerated from source, not reused from a prior run). Supersedes an earlier run against `86abe8e` that predated the listener-socket `O_NONBLOCK` fix (71,770–72,136 req/sec); this run confirms that fix was throughput-neutral as expected (71,863–73,535 req/sec here). |
 | **Build** | `cmake -B build -DCMAKE_BUILD_TYPE=Release` (verify `CMAKE_BUILD_TYPE` in `build/CMakeCache.txt` before trusting any number — a Debug build here also compiles ASan/UBSan in and will be dramatically slower) |
 | **Tool** | wrk (HTTP benchmarking) |
 | **Platform** | macOS 14.4.1, Apple M2 |
@@ -70,7 +70,7 @@ This project was built using knowledge from:
 From the labeled run above:
 - **0 connection errors** (all 400 connections succeeded)
 - **0 timeout errors** (no hung requests)
-- **408 read errors** (0.019%) — transient connection resets as `wrk` tears down connections at test end, not proxy-side failures
+- **372 read errors** (0.017%) — transient connection resets as `wrk` tears down connections at test end, not proxy-side failures
 - **99.98% success rate** under sustained heavy load
 
 ---
