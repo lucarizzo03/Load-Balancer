@@ -26,7 +26,7 @@ wrk -t12 -c400 -d30s --latency http://localhost:8080/
 | Parameter | Value |
 |-----------|-------|
 | **Date** | 2026-07-30 |
-| **Commit** | `1daac4b` + uncommitted `main.cpp` fixes on top — **not yet its own commit**. The benchmark below was run against the working tree with short-write buffering, safe `pairs` lookup on close, non-blocking accepted-client/backend sockets, and hot-path logging removed. One further fix (making the *listener* socket itself `O_NONBLOCK`, not just the sockets it hands off) was applied after this run and not re-benchmarked — it touches `accept()` only, not the hot forwarding path, so it's expected to be throughput-neutral, but that's an expectation, not a measurement. Re-run and re-verify once everything here is committed. |
+| **Commit** | `86abe8e` (short-write buffering, safe `pairs` lookup on close, non-blocking accepted-client/backend sockets, hot-path logging removed). One further fix landed in the same commit but *after* this benchmark was run — making the listener socket itself `O_NONBLOCK`, not just the sockets it hands off — and was not re-benchmarked. It touches `accept()` only, not the hot forwarding path, so it's expected to be throughput-neutral, but that's an expectation, not a measurement. |
 | **Build** | `cmake -B build -DCMAKE_BUILD_TYPE=Release` (verify `CMAKE_BUILD_TYPE` in `build/CMakeCache.txt` before trusting any number — a Debug build here also compiles ASan/UBSan in and will be dramatically slower) |
 | **Tool** | wrk (HTTP benchmarking) |
 | **Platform** | macOS 14.4.1, Apple M2 |
