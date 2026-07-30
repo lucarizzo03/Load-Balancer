@@ -9,6 +9,7 @@
 #include <sys/event.h>
 #include <sys/time.h>
 #include <unordered_map>
+#include <string>
 #include <fcntl.h>
 #include "healthcheck.hpp"
 #include "metrics.hpp"
@@ -22,6 +23,91 @@ atomic<bool> running(true);
 void signalHandler(int signum) {
     cout << "\nShutting down gracefully..." << endl;
     running.store(false);
+}
+
+// Closes both ends of a proxied connection and clears all per-fd bookkeeping.
+// Uses find() rather than operator[] so a stale event for an fd already torn
+// down earlier in the same kevent() batch can't default-construct a bogus
+// peer of 0 and close(0) (stdin) instead.
+void closeConnection(int fd, unordered_map<int, int>& pairs,
+                      unordered_map<int, string>& pendingWrites,
+                      unordered_map<int, chrono::steady_clock::time_point>& clientRequestStartTimes) {
+    auto it = pairs.find(fd);
+    int peer = (it != pairs.end()) ? it->second : -1;
+
+    close(fd);
+    pairs.erase(fd);
+    pendingWrites.erase(fd);
+    clientRequestStartTimes.erase(fd);
+
+    if (peer != -1) {
+        close(peer);
+        pairs.erase(peer);
+        pendingWrites.erase(peer);
+        clientRequestStartTimes.erase(peer);
+    }
+}
+
+// Drains a previously buffered write for fd once it becomes writable again.
+// Re-arms EVFILT_WRITE if the socket buffer fills up again before we finish.
+bool drainPending(int kq, int fd, unordered_map<int, string>& pendingWrites) {
+    auto it = pendingWrites.find(fd);
+    if (it == pendingWrites.end()) {
+        return true;
+    }
+
+    string& pending = it->second;
+    ssize_t written = write(fd, pending.data(), pending.size());
+    if (written == -1) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            written = 0;
+        } else {
+            return false;
+        }
+    }
+
+    pending.erase(0, (size_t)written);
+
+    if (pending.empty()) {
+        pendingWrites.erase(fd);
+        return true;
+    }
+
+    struct kevent ev;
+    EV_SET(&ev, fd, EVFILT_WRITE, EV_ADD | EV_ONESHOT, 0, 0, NULL);
+    return kevent(kq, &ev, 1, NULL, 0, NULL) != -1;
+}
+
+// Writes to peer immediately if possible; otherwise buffers whatever the
+// kernel wouldn't accept and arms EVFILT_WRITE to finish later. Bytes are
+// always appended behind any already-buffered data so forwarded order is
+// preserved across multiple short writes.
+bool queueWrite(int kq, int peer, const char* data, size_t len, unordered_map<int, string>& pendingWrites) {
+    auto it = pendingWrites.find(peer);
+    if (it != pendingWrites.end() && !it->second.empty()) {
+        it->second.append(data, len);
+        return true; // already waiting on EVFILT_WRITE; new data just queues behind it
+    }
+
+    ssize_t written = write(peer, data, len);
+    if (written == -1) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            written = 0;
+        } else {
+            return false;
+        }
+    }
+
+    if ((size_t)written == len) {
+        return true;
+    }
+
+    string& pending = pendingWrites[peer];
+    pending.append(data + written, len - (size_t)written);
+
+    struct kevent ev;
+    EV_SET(&ev, peer, EVFILT_WRITE, EV_ADD | EV_ONESHOT, 0, 0, NULL);
+    return kevent(kq, &ev, 1, NULL, 0, NULL) != -1;
 }
 
 int main(int argc, char* argv[]) {
@@ -70,6 +156,9 @@ int main(int argc, char* argv[]) {
         perror("socket");
         return 1;
     }
+
+    int sockfdFlags = fcntl(sockfd, F_GETFL, 0);
+    fcntl(sockfd, F_SETFL, sockfdFlags | O_NONBLOCK);
 
     // ADD SOCKET RE-USE -- look this up
     int opt = 1;
@@ -139,6 +228,9 @@ int main(int argc, char* argv[]) {
     // Track when backend connections started (for connection setup latency)
     unordered_map<int, chrono::steady_clock::time_point> backendConnectStartTimes;
 
+    // Buffers the unwritten tail of a short write until the peer fd is writable again
+    unordered_map<int, string> pendingWrites;
+
     // server loop
     while(true) {
         int pending = kevent(kq, NULL, 0, eventList, 1024, NULL);
@@ -164,6 +256,9 @@ int main(int argc, char* argv[]) {
                     perror("newfd");
                     continue;
                 }
+
+                int newfdFlags = fcntl(newfd, F_GETFL, 0);
+                fcntl(newfd, F_SETFL, newfdFlags | O_NONBLOCK);
 
                 optional<Backend> backend = pool.RoundRobin();
                 if (!backend) {
@@ -207,7 +302,6 @@ int main(int argc, char* argv[]) {
                 else {
                     auto end = chrono::steady_clock::now();
                     auto connectionsLatency = chrono::duration_cast<chrono::microseconds>(end - start).count();
-                    cout << "1: " << connectionsLatency << endl;
                     metric.recordConnectionLat(connectionsLatency);
                 }
 
@@ -226,75 +320,66 @@ int main(int argc, char* argv[]) {
                 pairs[newfd] = backfd;
                 pairs[backfd] = newfd;
                 clientRequestStartTimes[newfd] = chrono::steady_clock::now();
-
-                cout << "New connection: " << newfd <<  " and " << backfd << endl;
             }
             else if (event->filter == EVFILT_WRITE) {
                 if (backendConnectStartTimes.count(event->ident) > 0) {
                     auto connectEnd = chrono::steady_clock::now();
                     auto connectStart = backendConnectStartTimes[event->ident];
                     auto connectionLatency = chrono::duration_cast<chrono::microseconds>(connectEnd - connectStart).count();
-                    cout << "2: " << connectionLatency << endl;
                     metric.recordConnectionLat(connectionLatency);
                     backendConnectStartTimes.erase(event->ident);
-                    
-                    cout << "Backend connection established: " << connectionLatency << " μs" << endl;
 
-                    int clientFd = pairs[event->ident];
-                    struct kevent clientEv;
-                    EV_SET(&clientEv, clientFd, EVFILT_READ, EV_ADD, 0, 0, NULL);
-                    if (kevent(kq, &clientEv, 1, NULL, 0, NULL) == -1) {
-                        perror("kevent: add client read");
+                    auto clientIt = pairs.find((int)event->ident);
+                    if (clientIt != pairs.end()) {
+                        struct kevent clientEv;
+                        EV_SET(&clientEv, clientIt->second, EVFILT_READ, EV_ADD, 0, 0, NULL);
+                        if (kevent(kq, &clientEv, 1, NULL, 0, NULL) == -1) {
+                            perror("kevent: add client read");
+                        }
+                    }
+                }
+                else {
+                    // Backpressure drain: peer's send buffer was full earlier, now writable again
+                    if (!drainPending(kq, (int)event->ident, pendingWrites)) {
+                        closeConnection((int)event->ident, pairs, pendingWrites, clientRequestStartTimes);
                     }
                 }
             }
             else { // DATA FROM CLIENT OR BACKEND
                 char buffer[65536];
                 ssize_t bytesReadIn = read(event->ident, buffer, sizeof(buffer));
-                if (bytesReadIn <= 0) {
-                    if (bytesReadIn == 0) {
-                        cout << "No bytes" << endl;
-                    }
-                    else {
-                        perror("reading");
-                    }
 
-                    int peer = pairs[event->ident];
-                    close(event->ident);
-                    close(peer);
-                    pairs.erase(event->ident);
-                    pairs.erase(peer);
-                    clientRequestStartTimes.erase(event->ident);
-                    clientRequestStartTimes.erase(peer);
-                }
-                else {
-                    int peer = pairs[event->ident];
-                    ssize_t written = write(peer, buffer, bytesReadIn);
-                    if (written == -1) {
-                        perror("write to peer");
-                        close(event->ident);
-                        close(peer);
-                        pairs.erase(event->ident);
-                        pairs.erase(peer);
-                        clientRequestStartTimes.erase(event->ident);
-                        clientRequestStartTimes.erase(peer);
-                    } 
-                    else {
-                        if (clientRequestStartTimes.count(peer) > 0) {
-                            auto reqEnd = chrono::steady_clock:: now();
-                            auto reqStart = clientRequestStartTimes[peer];
-                            auto fullReqLatency = chrono::duration_cast<chrono::microseconds>(reqEnd - reqStart).count();
-                            cout << "3: " << fullReqLatency << endl;
-                            // Record full request latency
-                            metric.recordFullReqLat(fullReqLatency);
-                            
-                            // Remove timer - this request is complete
-                            clientRequestStartTimes.erase(peer);
-                            
-                            cout << "Request completed: " << fullReqLatency << " μs (total)" << endl;
-                        }
-                        cout << "Forwarded " << bytesReadIn << " bytes: fd=" << event->ident << " -> fd=" << peer << endl;
+                if (bytesReadIn < 0) {
+                    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                        continue; // spurious readiness notification, nothing to do yet
                     }
+                    perror("reading");
+                    closeConnection((int)event->ident, pairs, pendingWrites, clientRequestStartTimes);
+                    continue;
+                }
+
+                if (bytesReadIn == 0) {
+                    closeConnection((int)event->ident, pairs, pendingWrites, clientRequestStartTimes);
+                    continue;
+                }
+
+                auto pairIt = pairs.find((int)event->ident);
+                if (pairIt == pairs.end()) {
+                    continue; // stale event for a connection already torn down this batch
+                }
+                int peer = pairIt->second;
+
+                if (!queueWrite(kq, peer, buffer, (size_t)bytesReadIn, pendingWrites)) {
+                    closeConnection(peer, pairs, pendingWrites, clientRequestStartTimes);
+                    continue;
+                }
+
+                if (clientRequestStartTimes.count(peer) > 0) {
+                    auto reqEnd = chrono::steady_clock::now();
+                    auto reqStart = clientRequestStartTimes[peer];
+                    auto fullReqLatency = chrono::duration_cast<chrono::microseconds>(reqEnd - reqStart).count();
+                    metric.recordFullReqLat(fullReqLatency);
+                    clientRequestStartTimes.erase(peer);
                 }
             }
         }
